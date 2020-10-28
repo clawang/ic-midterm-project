@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <!-- the standard p5 drawing and animation library -->
+    <script src="p5/p5.min.js"></script>
+
+    <!-- the standard p5 sound library
+         note: this library will fail if not loaded over
+         a secure connection (https) or on your localhost) -->
+    <script src="p5/addons/p5.sound.js"></script>
+
+    <!-- your custom sketch file -->
+    <script src="sketch.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <title>Trick or Treat</title>
+  </head>
+  <body>
+    <aside class="pop-up">
+      <div class="pop-up-inner">
+        <h2>Documentation</h2>
+        <p>Firstly, I was inspired by the upcoming Halloween holiday. However, I'm not big on horror; in fact, spiders are about as much scare as I can take, so I decided to make a game with a more cute Halloween vibe.</p>
+        <p>I also decided to lean into the idea of trick OR treat. Whenever we think about it, we always forget the trick aspect of the trick or treat. I thought, wouldn't it be fun to make a game where you can go virtual trick-or-treating (especially since no one can go trick or treating in person this year) that incorporates the "trick" into the game?</p>
+        <p>Also I thought the concept of an adorable grave-robbing ghost was pretty funny.</p>
+        <p id="close">X</p>
+      </div>
+    </aside>
+    <section class="container">
+      <div class="title">
+        <p>Trick or Treat</p>
+        <p>Our ghost friend Casper is looking to trick or treat this halloween!</p>
+        <p>Hit the key 1, 2, or 3 depending on how hard you want the game to be!</p>
+      </div>
+      <div class="game">
+        <div id="game-container"></div>
+        <input type="range" id="speed" min=1 max=5 value=2>
+        <p>Character Speed</p>
+      </div>
+      <div class="instructions">
+        <p>How to Play</p>
+        <p>Use the arrow keys to navigate around the graveyard, and 'a' to unlock the trick or treat within each headstone.</p>
+        <p>Watch out! If it's a trick, you'll have to run away until the trick goes off the screen.</p>
+      </div>
+      <div class="documentation">
+        <p id="doc">Documentation</p>
+      </div>
+    </section>
+  </body>
+</html>

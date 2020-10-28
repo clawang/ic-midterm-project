@@ -1,0 +1,109 @@
+@font-face {
+  font-family: squarePixel;
+  src: url(square_pixel-7.ttf);
+}
+
+body {
+  margin: 0;
+}
+.container {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  box-sizing: border-box;
+  background: url(bg.png);
+  background-size: cover;
+  text-align: center;
+  padding: 3em;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+p {
+  color: white;
+  font-family: squarePixel, sans-serif;
+}
+
+canvas {
+  margin: 0 auto;
+  display: block;
+  width: 500px;
+  border: 2px solid black;
+}
+
+.title, .instructions {
+  flex-shrink: 2;
+  width: 250px;
+  padding: 2em;
+  text-align: left;
+}
+
+input[type="range"] {
+  margin-top: 1em;
+  margin-bottom: 0;
+}
+
+.game p {
+  margin-top: 0;
+}
+
+.documentation {
+  position: absolute;
+  bottom: 2em;
+  right: 2em;
+  font-size: 12px;
+}
+
+.documentation p {
+  background: white;
+  color: black;
+  padding: 0.5em;
+  transition: 0.5s;
+  cursor: pointer;
+}
+
+.documentation p:hover {
+  background: black;
+  color: white;
+}
+
+.pop-up {
+  position: fixed;
+  width: 80%;
+  height: 60%;
+  top: 20%;
+  left: 10%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.5s linear;
+}
+
+.pop-up h2, .pop-up p {
+  font-family: 'Courier';
+  color: black;
+}
+
+.pop-up h2 {
+  margin-top: 0;
+}
+
+.pop-up-inner {
+  max-width: 800px;
+  margin: 3em auto;
+  padding: 0 3em;
+}
+
+#close {
+  position: absolute;
+  top: 1em;
+  right: 2em;
+  font-size: 20px;
+  cursor: pointer;
+}
