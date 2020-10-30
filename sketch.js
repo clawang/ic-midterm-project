@@ -1,198 +1,93 @@
-// letiables to hold our artwork
-let ghostArtwork;
-let ghostLeftArtwork;
-let candy1Artwork;
-let candy2Artwork;
-let tombStoneArtwork;
-let spiderArtwork;
-let bgArtwork;
-let hammerArtwork;
-let hammerLeftArtwork;
-let startscreenArtwork;
-let endscreenArtwork;
-let fontBold;
-let fontSkinny;
-let breakSound;
-
 //game variables
 let canvasSize = 500;
-let character;
+let player;
+let tiles = [];
+const tileMap = [
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  [0, 0, 0, 0, 0, 0, 4, 5, 6, 0], 
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  [0, 4, 5, 5, 6, 0, 0, 0, 0, 0], 
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  [0, 0, 0, 4, 5, 5, 5, 6, 0, 0], 
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  [1, 2, 2, 2, 2, 2, 2, 2, 2, 3]
+];
 let graves = [];
-let spiders = [];
-let candy = [];
-let closestGrave = -1;
-let tombstone;
-let score = 0;
-let deceased = 0;
-let gameState = 1;
-let delay = 50;
-let graveCount = {
-    1: 10,
-    2: 15,
-    3: 20
-};
-let level = 0;
+let gravity = 0.2;
+let covids = [];
+let covidCount = 5;
+let deaths = 0;
 
 //direction variables
 let up = 0;
 let down = 0;
 let left = 0;
 let right = 0;
+let jumping = false;
 
 // load in all of our graphical assets
 function preload() {
-  bgArtwork = loadImage("grass.png");
-  ghostArtwork = loadImage("ghost.png");
-  ghostLeftArtwork = loadImage("ghost-left.png");
-  hammerArtwork = loadImage("hammer.png");
-  hammerLeftArtwork = loadImage("hammer-left.png");
-  candy1Artwork = loadImage("candy1.png");
-  candy2Artwork = loadImage("candy2.png");
-  tombStoneArtwork = loadImage("tombstone.png");
-  spiderArtwork = loadImage("spider.png");
-  startscreenArtwork = loadImage("startscreen.png");
-  endscreenArtwork = loadImage("endscreen.png");
-  fontBold = loadFont('pixel_noir/Pixel-Noir.ttf');
-  fontSkinny = loadFont('pixel_noir/Pixel-Noir_Skinny_Short.ttf');
-  breakSound = loadSound("break.mp3");
+  //bgArtwork = loadImage("grass.png");
+  charArtwork = loadImage("MS_Warrior_art.png");
+  tiles[1] = loadImage("Tile_1.png");
+  tiles[2] = loadImage("Tile_2.png");
+  tiles[3] = loadImage("Tile_3.png");
+  tiles[4] = loadImage("Tile_10.png");
+  tiles[5] = loadImage("Tile_11.png");
+  tiles[6] = loadImage("Tile_12.png");
+  covidArtwork = loadImage("covid.png");
 }
 
 function setup() {
-  let canvas = createCanvas(canvasSize, canvasSize);
+  let canvas = createCanvas(canvasSize, canvasSize + 100);
   canvas.parent('game-container');
 
-  character = new Ghost(0, canvasSize/2);
+  player = new Character(0, canvasSize/2);
+  for(let i = 0; i < covidCount; i++) {
+    covid = new Covid();
+    covids.push(covid);
+  }
+  
+  imageMode(CORNER)
+  fill(200,200,200)
+  rect(0,400, 500, 100)
 }
-
-let bgYPos = 0;
-let visible = true;
-let time = 0;
 
 function draw() {
   // draw our background image
   clear();
   noStroke();
-  textFont(fontSkinny);
   imageMode(CORNER);
 
-  if(gameState === 1) {
-    image(startscreenArtwork, 0, bgYPos, 500, 590);
-    fill(255);
-    textSize(30);
-    textAlign(CENTER);
-    textFont(fontBold);
-    if(bgYPos > -90) {
-      bgYPos--;
-    } else {
-      text('TRICK OR TREAT', canvasSize/2, 150);
-      fill(0);
-      rect(80, 160, 340, 25);
-      fill(255);
-      textFont(fontSkinny);
-      textSize(14);
-      if(time % 40 === 0) {
-        visible = !visible;
-      }
-      if(visible) {
-        text('PRESS 1, 2, OR 3 TO START', canvasSize/2, 180);
+  fill(0)
+  rect(0,500, 500, 50)
+
+  fill(255)
+  textSize(10)
+  text("LEVEL " + player.level, 25, 525)
+  //console.log(player.level)
+  text(" HP" + player.hp, 60, 525)
+
+  for(let r = 0; r < 10; r++) {
+    for(let c = 0; c < 10; c++) {
+      let tileIndex = tileMap[r][c];
+      if(tileIndex > 0) {
+        image(tiles[tileIndex], c*50, r*50, 50, 50);
       }
     }
+  }
 
-    if(keyIsDown(49)) {
-      userStartAudio().then(function() {
-        console.log('audio started');
-      });
-      level = 1;
-      setupGame(1);
-      gameState = 2;
-    }
-    if(keyIsDown(50)) {
-      userStartAudio().then(function() {
-        console.log('audio started');
-      });
-      level = 2;
-      setupGame(2);
-      gameState = 2;
-    }
-    if(keyIsDown(51)) {
-      userStartAudio().then(function() {
-        console.log('audio started');
-      });
-      level = 3;
-      setupGame(3);
-      gameState = 2;
-    }
-    
-  } else if(gameState === 2) {
-    image(bgArtwork, 0, 0, 500, 500);
+  imageMode(CENTER);
+  covids.forEach(c => c.draw());
+  player.display();
 
-    let removedSpiders = [];
-    graves.forEach(grave => grave.display());
-    spiders.forEach((item, index) => {
-      item.display();
-      if(item.collision(character, 40) && !item.dead) {
-        character.freeze();
-        item.kill();
-        score--;
-        removedSpiders.push(index);
-      }
-    });
-    candy.forEach(item => item.display());
-
-    removedSpiders.forEach(index => spiders.splice(index, 1));
-
-    character.display();
-
+  if(deaths >= covidCount) {
     fill(255);
-    textSize(14);
-    textAlign(LEFT);
-    text("POINTS: " + score, 30, 50);
-
-    if(keyIsDown(65)) {
-      hammer();
-    }
-    if(deceased >= graveCount[level]) {
-      delay--;
-    }
-    if(delay <= 0) {
-      gameState = 3;
-    }
-  } else if(gameState === 3) {
-    image(endscreenArtwork, 0, 0, 500, 500);
-    fill(255);
-    textSize(30);
-    textAlign(CENTER);
-    textFont(fontBold);
-    text('GAME OVER', canvasSize/2, 150);
+    rect(0, 0, 500, 500);
     fill(0);
-    rect(110, 160, 280, 25);
-    fill(255);
-    textFont(fontSkinny);
-    textSize(14);
-    text('FINAL SCORE: ' + score, canvasSize/2, 180);
-  }
-
-  time++;
-}
-
-function setupGame(level) {
-  for(let i = 0; i < graveCount[level]; i++) {
-    tombstone = new Tombstone(i);
-    graves.push(tombstone);
-  }
-}
-
-function hammer() {
-  if(closestGrave >= 0) {
-    if(graves[closestGrave].collision(character, 60)) {
-      let state = graves[closestGrave].break();
-      if(state === 0) {
-        candy.push(graves.splice(closestGrave, 1)[0]);
-      } else {
-        spiders.push(graves.splice(closestGrave, 1)[0]);
-      }
-      closestGrave = -1;
-    }
+    text('YOU WIN! :D', 200, 200);
   }
 }
 
@@ -209,15 +104,14 @@ function collision(r1, r2) {
 
 function placeFree(xNew, yNew) {
   let temp = {xPos: xNew, yPos: yNew, size: 50};
-  if(xNew < 0 || xNew > 500 || yNew < 0 || yNew > 500) {
+  if(xNew < 0 || xNew > 500 || yNew < 0 || yNew > 480) {
     return false;
   }
-  for(let i = 0; i < graves.length; i++ ) {
-    let grave = graves[i];
-    if(collision(temp, grave)) {
-      closestGrave = i;
-      return false;
-    } 
+  let xTile = Math.floor(xNew / 50);
+  let yTile = Math.floor(yNew / 50);
+  let tileIndex = tileMap[yTile][xTile];
+  if(tileIndex > 0 && up < 1) {
+    return false;
   }
   return true;
 }
@@ -227,8 +121,10 @@ function randomNumber(min, max) {
 }
 
 function keyPressed() {
-  if (keyCode === UP_ARROW) {
+  if (keyCode === UP_ARROW && jumping === false) {
     up = 1;
+    jumping = true;
+    player.jump();
   }
   if (keyCode === DOWN_ARROW) {
     down = 1;
@@ -238,6 +134,13 @@ function keyPressed() {
   }
   if (keyCode === RIGHT_ARROW) {
     right = 1;
+  }
+  if(keyCode === 32) {
+    covids.forEach(c => {
+      if(player.distance(c) <= 50 && !c.dead) {
+        c.hurt(player.hitPoints);
+      }
+    })
   }
 };
 
@@ -257,58 +160,25 @@ function keyReleased() {
 };
 
 window.onload=function(){
-  let speedVariable = document.getElementById('speed');
-  speedVariable.addEventListener("change", function(event) {
-    character.setSpeed();
-  });
 
-  let transparency = document.querySelector('.pop-up').style.opacity;
-  let link = document.getElementById('doc');
-  link.addEventListener("click", function(event) {
-    if(transparency === "1") {
-      document.querySelector('.pop-up').style.opacity = 0;
-    } else if(transparency === "0") {
-      document.querySelector('.pop-up').style.opacity = 1;
-    } else {
-      document.querySelector('.pop-up').style.opacity = 1;
-    }
-  });
-
-  let close = document.getElementById('close');
-  close.addEventListener("click", function(event) {
-    document.querySelector('.pop-up').style.opacity = 0;
-  });
 }
 
-class Ghost {
+class Character {
   constructor(x, y) {
     this.xPos = x;
     this.yPos = y;
     this.size = 50;
-    this.speed = 2;
-    this.frozen = 0;
-    this.left = false;
+    this.speed = 3;
+    this.gravitySpeed = 0;
+    this.hitPoints = 40;
+    this.hp = 1000;
+    this.attacking = false;
+    this.level = 1
   }
 
   display() {
-    if(this.frozen <= 0) {
-      this.move();
-    } else {
-      this.frozen -= 1;
-    }
-    imageMode(CENTER);
-    this.direction();
-    if(this.left) {
-      image(ghostLeftArtwork, this.xPos, this.yPos, this.size, this.size);
-      image(hammerLeftArtwork, this.xPos - this.size/2 - 5, this.yPos - 5, 20, 20);
-    } else {
-      image(ghostArtwork, this.xPos, this.yPos, this.size, this.size);
-      image(hammerArtwork, this.xPos + this.size/2 + 5, this.yPos - 5, 20, 20);
-    }
-    if(this.frozen > 0) {
-      fill(255, 0, 0, 50);
-      rect(0, 0, 500, 500);
-    }
+    this.move();
+    image(charArtwork, this.xPos, this.yPos, 30, 46);
   }
 
   direction() {
@@ -321,119 +191,62 @@ class Ghost {
   }
 
   move() {
+    this.gravitySpeed += gravity;
     let xDir = right - left;
-    let yDir = down - up;
+    let yDir = this.gravitySpeed;
+    up = ((this.gravitySpeed < 0) ? 1 : 0);
     if (placeFree(this.xPos + this.speed * xDir, this.yPos)) {
        this.xPos += this.speed * xDir;
     }
-    if (placeFree(this.xPos, this.yPos + this.speed * yDir)) {
-       this.yPos += this.speed * yDir;
+    if (placeFree(this.xPos, this.yPos + yDir)) {
+       this.yPos += yDir;
+    } else {
+      jumping = false;
+      this.gravitySpeed = 0;
     }
   }
 
-  distance(grave) {
-    return Math.sqrt(Math.pow(grave.xPos - this.xPos, 2) + Math.pow(grave.yPos - this.yPos, 2));
+  jump() {
+    this.gravitySpeed = -8;
   }
 
-  freeze() {
-    this.frozen = 20;
+  attack() {
+    this.attacking = true;
   }
 
-  setSpeed() {
-    this.speed = document.getElementById("speed").value;
+  distance(monster) {
+    return Math.sqrt(Math.pow(monster.xPos - this.xPos, 2) + Math.pow(monster.yPos - this.yPos, 2));
   }
 }
 
-const stuff = ['treat', 'trick'];
-const positions = [];
-
-class Tombstone {
-  constructor(i) {
-    let x, y;
-    while(true) {
-      x = randomNumber(1, 10) * 50;
-      y = randomNumber(1, 10) * 50;
-      let match = positions.filter(obj => obj[0] === x && obj[1] === y);
-      if(match.length > 0) {
-        continue;
-      } else {
-        positions.push([x, y]);
-        break;
-      }
-    }
-    this.xPos = x;
-    this.yPos = y;
-    this.size = 50;
-    this.state = Math.floor(Math.random() * Math.floor(2));
-    this.broken = false;
-    this.id = i;
+class Covid {
+  constructor() {
+    this.xPos = random(100,400);
+    this.xStart = this.xPos;
+    this.yPos = random(100,400);
+    this.hp = 100;
+    this.hit = 50;
     this.dead = false;
-    this.delay = 25;
+    this.seed = random(1, 25);
   }
 
-  display() {
-    imageMode(CENTER);
-    //console.log(this.broken);
-    if(this.broken && this.state === 0) {
-      if(this.delay > 0) {
-        image(candy1Artwork, this.xPos, this.yPos, 30, 30);
-        this.delay--;
-      } else {
-        this.kill();
-      }
-    } else if(this.broken && this.state === 1) {
-      if(this.xPos >= 495 || this.xPos <= 5 || this.yPos <= 5 || this.yPos >= 495) {
-        this.kill();
-      } 
-      if(!this.dead) {
-        this.chase();
-        image(spiderArtwork, this.xPos, this.yPos, 30, 30);
-      }
-    } else {
-      image(tombStoneArtwork, this.xPos, this.yPos, this.size, this.size);
-    }
-  }
-
-  collision(ghost, radius) {
-    if(ghost.distance(this) < radius) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  chase() {
-    if(this.delay > 0) {
-      this.delay--;
-    } else {
-      if(this.xPos > character.xPos) {
-        this.xPos -= 1;
-      } else if(this.xPos < character.xPos) {
-        this.xPos += 1;
-      }
-      if(this.yPos > character.yPos) {
-        this.yPos -= 1;
-      } else if(this.yPos < character.yPos) {
-        this.yPos += 1;
-      }
-    }
-  }
-
-  break() {
-    if(!this.broken) {
-      this.broken = true;
-      if(this.state === 0) {
-        score++;
-      }
-      breakSound.play();
-      return this.state;
-    }
-  }
-
-  kill() {
+  draw() {
     if(!this.dead) {
+      let x = noise(this.seed);
+		  let r = map(x, 0, 1, -50, 50);
+      this.xPos = this.xStart + r;
+      image(covidArtwork, this.xPos, this.yPos, 50, 50);
+      fill(0);
+      text('HP: ' + this.hp, this.xPos - 20, this.yPos - 30);
+      this.seed += 0.01;
+    }
+  }
+
+  hurt(pts) {
+    this.hp -= pts;
+    if(this.hp < 0) {
       this.dead = true;
-      deceased++;
+      deaths++;
     }
   }
 }
