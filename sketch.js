@@ -19,6 +19,8 @@ let gravity = 0.2;
 let covids = [];
 let covidCount = 5;
 let deaths = 0;
+let bullets = [];
+let bulletWait = 0;
 
 //direction variables
 let up = 0;
@@ -61,6 +63,9 @@ function draw() {
   noStroke();
   imageMode(CORNER);
 
+  fill(0, 200, 200);
+  rect(0,0,500,500);
+
   fill(0)
   rect(0,500, 500, 50)
 
@@ -68,7 +73,8 @@ function draw() {
   textSize(10)
   text("LEVEL " + player.level, 25, 525)
   //console.log(player.level)
-  text(" HP" + player.hp, 60, 525)
+  text(" HP " + player.hp, 70, 525)
+  text(" EXPERIENCE " + deaths, 120, 525)
 
   for(let r = 0; r < 10; r++) {
     for(let c = 0; c < 10; c++) {
@@ -82,6 +88,20 @@ function draw() {
   imageMode(CENTER);
   covids.forEach(c => c.draw());
   player.display();
+  bullets.forEach(b => {
+    if(b.alive) {
+      b.draw();
+      covids.forEach(cd => {
+        if(b.distance(cd) <= 30&& ! cd.dead) {
+          cd.hurt(player.hitPoints);
+          b.alive = false;
+        }
+      });
+    }
+  });
+  if(bulletWait > 0) {
+    bulletWait--;
+  }
 
   if(deaths >= covidCount) {
     fill(255);
@@ -135,12 +155,8 @@ function keyPressed() {
   if (keyCode === RIGHT_ARROW) {
     right = 1;
   }
-  if(keyCode === 32) {
-    covids.forEach(c => {
-      if(player.distance(c) <= 50 && !c.dead) {
-        c.hurt(player.hitPoints);
-      }
-    })
+  if(keyCode === 88) {
+    player.shooting = true;
   }
 };
 
@@ -157,6 +173,9 @@ function keyReleased() {
   if (keyCode === RIGHT_ARROW) {
     right = 0;
   }
+  if(keyCode === 88) {
+    player.shooting = false;
+  }
 };
 
 window.onload=function(){
@@ -172,26 +191,31 @@ class Character {
     this.gravitySpeed = 0;
     this.hitPoints = 40;
     this.hp = 1000;
-    this.attacking = false;
+    this.shooting = false;
     this.level = 1
+    this.direction = 0;
   }
 
   display() {
     this.move();
+    if(this.shooting) {
+      this.shoot();
+    }
     image(charArtwork, this.xPos, this.yPos, 30, 46);
   }
 
-  direction() {
+  calculateDirection() {
     if(left - right > 0) {
-      this.left = true;
+      this.direction = -1;
     }
     if(right - left > 0) {
-      this.left = false;
+      this.direction = 1;
     }
   }
 
   move() {
     this.gravitySpeed += gravity;
+    this.calculateDirection();
     let xDir = right - left;
     let yDir = this.gravitySpeed;
     up = ((this.gravitySpeed < 0) ? 1 : 0);
@@ -211,7 +235,37 @@ class Character {
   }
 
   attack() {
-    this.attacking = true;
+    covid
+  }
+
+  shoot() {
+    if(bulletWait === 0) { //and waiting period over
+      let s = new Bullet(this.xPos, this.yPos, this.direction);
+      bullets.push(s);
+      bulletWait = 20;
+    }
+  }
+
+  distance(monster) {
+    return Math.sqrt(Math.pow(monster.xPos - this.xPos, 2) + Math.pow(monster.yPos - this.yPos, 2));
+  }
+}
+
+class Bullet {
+  constructor(x, y, d) {
+    this.xPos = x;
+    this.yPos = y;
+    this.direction = d;
+    this.speed = 2;
+    this.alive = true;
+  }
+
+  draw() {
+    if(this.alive) {
+      this.xPos += this.speed * this.direction;
+      fill(255, 254, 240);
+      ellipse(this.xPos, this.yPos, 10, 10);
+    }
   }
 
   distance(monster) {
@@ -224,10 +278,12 @@ class Covid {
     this.xPos = random(100,400);
     this.xStart = this.xPos;
     this.yPos = random(100,400);
+    this.hpFull = 100
     this.hp = 100;
     this.hit = 50;
     this.dead = false;
     this.seed = random(1, 25);
+    this.bar = 50 
   }
 
   draw() {
@@ -238,12 +294,18 @@ class Covid {
       image(covidArtwork, this.xPos, this.yPos, 50, 50);
       fill(0);
       text('HP: ' + this.hp, this.xPos - 20, this.yPos - 30);
+    
+      
+     
+      fill(189, 9, 0)
+      rect(this.xPos - 30, this.yPos-50, this.hp/2, 8)
       this.seed += 0.01;
     }
   }
 
   hurt(pts) {
     this.hp -= pts;
+    this.bar = 50 *(this.hp/this.hpFull)
     if(this.hp < 0) {
       this.dead = true;
       deaths++;
