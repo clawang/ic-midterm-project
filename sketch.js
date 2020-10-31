@@ -21,6 +21,9 @@ let covidCount = 5;
 let deaths = 0;
 let bullets = [];
 let bulletWait = 0;
+let level = 1;
+let graveY = 0;
+let gameOver = false;
 
 //direction variables
 let up = 0;
@@ -31,8 +34,12 @@ let jumping = false;
 
 // load in all of our graphical assets
 function preload() {
-  //bgArtwork = loadImage("grass.png");
+  bgArtwork = loadImage("japan.png");
+  //guy
   charArtwork = loadImage("MS_Warrior_art.png");
+  //girl
+  charLeft = loadImage("mercedes_left.png");
+  charRight = loadImage("mercedes_right.png")
   tiles[1] = loadImage("Tile_1.png");
   tiles[2] = loadImage("Tile_2.png");
   tiles[3] = loadImage("Tile_3.png");
@@ -40,6 +47,9 @@ function preload() {
   tiles[5] = loadImage("Tile_11.png");
   tiles[6] = loadImage("Tile_12.png");
   covidArtwork = loadImage("covid.png");
+  blueBall = loadImage("good.svg");
+  graveArtwork = loadImage("tombstone.png");
+  ghostArtwork = loadImage("ghost.png");
 }
 
 function setup() {
@@ -63,8 +73,7 @@ function draw() {
   noStroke();
   imageMode(CORNER);
 
-  fill(0, 200, 200);
-  rect(0,0,500,500);
+  image(bgArtwork, 0, 0, 500, 500);
 
   fill(0)
   rect(0,500, 500, 50)
@@ -86,7 +95,15 @@ function draw() {
   }
 
   imageMode(CENTER);
-  covids.forEach(c => c.draw());
+  covids.forEach(c => {
+    c.draw();
+    if(player.distance(c) <= 50 && !c.contact && !c.dead) {
+      player.hurt(c.hit);
+      c.contact = true;
+    } else if(player.distance(c) > 50) {
+      c.contact = false;
+    }
+  });
   player.display();
   bullets.forEach(b => {
     if(b.alive) {
@@ -105,9 +122,28 @@ function draw() {
 
   if(deaths >= covidCount) {
     fill(255);
-    rect(0, 0, 500, 500);
+    image(japan.png,0,0);
+    //rect(0, 0, 500, 500);
     fill(0);
     text('YOU WIN! :D', 200, 200);
+    
+  }
+  
+  if(player.hp <= 0) {
+    gameOver = true;
+  }
+
+  if(gameOver) {
+    fill(0);
+    rect(0, 0, 500, 500);
+    player.display();
+    image(graveArtwork, player.xPos, graveY, 50, 50);
+    if(Math.abs(graveY - player.yPos) < 10) {
+      player.ghost = true;
+      player.yPos--;
+    } else {
+      graveY++;
+    }
   }
 }
 
@@ -141,22 +177,27 @@ function randomNumber(min, max) {
 }
 
 function keyPressed() {
-  if (keyCode === UP_ARROW && jumping === false) {
-    up = 1;
-    jumping = true;
-    player.jump();
-  }
-  if (keyCode === DOWN_ARROW) {
-    down = 1;
-  }
-  if (keyCode === LEFT_ARROW) {
-    left = 1;
-  }
-  if (keyCode === RIGHT_ARROW) {
-    right = 1;
-  }
-  if(keyCode === 88) {
-    player.shooting = true;
+  if(!gameOver) {
+    if (keyCode === UP_ARROW && jumping === false) {
+      up = 1;
+      jumping = true;
+      player.jump();
+    }
+    if (keyCode === DOWN_ARROW) {
+      down = 1;
+      
+    }
+    if (keyCode === LEFT_ARROW) {
+      left = 1;
+      player.graphic = charLeft
+    }
+    if (keyCode === RIGHT_ARROW) {
+      right = 1;
+      player.graphic = charRight
+    }
+    if(keyCode === 88) {
+      player.shooting = true;
+    }
   }
 };
 
@@ -194,6 +235,8 @@ class Character {
     this.shooting = false;
     this.level = 1
     this.direction = 0;
+    this.graphic = charLeft
+    this.ghost = false;
   }
 
   display() {
@@ -201,7 +244,21 @@ class Character {
     if(this.shooting) {
       this.shoot();
     }
-    image(charArtwork, this.xPos, this.yPos, 30, 46);
+
+    if(this.ghost) {
+      image(ghostArtwork, this.xPos, this.yPos, 60, 60);
+    } else {
+      image(this.graphic, this.xPos, this.yPos, 60, 60);
+    }
+
+    //left
+    if (keyIsDown(65)) {
+	    this.graphic = charLeft;
+	  }
+	    //right
+	  if (keyIsDown(68)) {
+	    this.graphic = charRight;
+	  }
   }
 
   calculateDirection() {
@@ -230,12 +287,18 @@ class Character {
     }
   }
 
+  hurt(pts) {
+    fill(255, 0, 0, 50);
+    rect(0, 0, 500, 500);
+    this.hp -= pts;
+  }
+
   jump() {
     this.gravitySpeed = -8;
   }
 
   attack() {
-    covid
+    
   }
 
   shoot() {
@@ -264,7 +327,8 @@ class Bullet {
     if(this.alive) {
       this.xPos += this.speed * this.direction;
       fill(255, 254, 240);
-      ellipse(this.xPos, this.yPos, 10, 10);
+      image(blueBall, this.xPos,this.yPos)
+      //ellipse(this.xPos, this.yPos, 10, 10);
     }
   }
 
@@ -284,6 +348,7 @@ class Covid {
     this.dead = false;
     this.seed = random(1, 25);
     this.bar = 50 
+    this.contact = false;
   }
 
   draw() {
@@ -294,10 +359,7 @@ class Covid {
       image(covidArtwork, this.xPos, this.yPos, 50, 50);
       fill(0);
       text('HP: ' + this.hp, this.xPos - 20, this.yPos - 30);
-    
-      
-     
-      fill(189, 9, 0)
+      fill(189, 9, 0);
       rect(this.xPos - 30, this.yPos-50, this.hp/2, 8)
       this.seed += 0.01;
     }
